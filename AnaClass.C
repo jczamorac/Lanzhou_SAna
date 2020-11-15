@@ -59,6 +59,24 @@ void AnaClass::ReadConfigFile(const TString& filename){
 
 }
 
+double AnaClass::Correct7BeTotEner(double Etot, int TelNumb){
+
+  double A[4]={650.954,	664.522,	655.307,	673.395};
+  double B[4]={-8.43807,	-8.65518,	-8.50244,	-8.79981};
+  double C[4]={0.0401052,	0.0414934,	0.0404924,	0.0424319};
+  double D[4]={-7.38e-05,	-7.70e-05,	-7.47e-05,	-7.91e-05};
+
+  if(Etot>190 || Etot<80 || TelNumb>3) return 0;
+  else{
+
+    double Etotcorr = A[TelNumb] + B[TelNumb]*pow(Etot,2.0) + C[TelNumb]*pow(Etot,3.0) + D[TelNumb]*pow(Etot,4.0);
+    Etotcorr += Etot;
+    return Etotcorr;
+  }
+
+}
+
+
 void AnaClass::Loop(const TString& st)
 {
 
@@ -282,6 +300,18 @@ void AnaClass::Loop(const TString& st)
               kinematics = NULL;
             }
          }
+
+
+         /*Correction of 7Be punching through
+            It is necessary to create a TCutG file for each telescope
+            only selecting the region to be corrected*/
+           //double corr7Be_tel1X_MeV, corr7Be_tel2X_MeV, corr7Be_tel3X_MeV, corr7Be_tel4X_MeV;
+           //if(CUT7Be1->IsInside(SSD1_MeV,DSSD1X_eng_MeV)) corr7Be_tel1X_MeV = Correct7BeTotEner(tel1X_MeV, 0);
+           //if(CUT7Be2->IsInside(SSD2_MeV,DSSD2X_eng_MeV)) corr7Be_tel2X_MeV = Correct7BeTotEner(tel2X_MeV, 1);
+           //if(CUT7Be3->IsInside(SSD3_MeV,DSSD3X_eng_MeV)) corr7Be_tel3X_MeV = Correct7BeTotEner(tel3X_MeV, 2);
+           //if(CUT7Be4->IsInside(SSD4_MeV,DSSD4X_eng_MeV)) corr7Be_tel4X_MeV = Correct7BeTotEner(tel4X_MeV, 3);
+
+
 
 
 

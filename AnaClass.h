@@ -103,6 +103,7 @@ public :
    Int_t           fCurrent; //!current Tree number in a TChain
 
    void ReadConfigFile(const TString& filename);
+   double Correct7BeTotEner(double Etot, int TelNumb);
 
 // Fixed size dimensions of array or collections stored in the TTree if any.
 
