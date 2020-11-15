@@ -47,15 +47,11 @@ void AnaClass::ReadConfigFile(const TString& filename){
 
 
 
-   cout<<"Reading Configuration File"<<endl;
-   TEnv* CFile;
-   //CFile = new TEnv("config/par.txt");
+   cout<<"Reading Acceptance Map (1 deg bins)"<<endl;
+   CFile = new TEnv("config/accept_map.dat");
 
 
-   //theta1Z = CFile->GetValue("Theta1Z",-1000.0);
-   //theta2Z = CFile->GetValue("Theta2Z",-1000.0);
 
-   delete CFile;
 
 }
 
@@ -80,15 +76,17 @@ double AnaClass::Correct7BeTotEner(double Etot, int TelNumb){
 void AnaClass::Loop(const TString& st)
 {
 
+
  //----------------------create a new outfile for the respective run number
   string infile(st);
   //string str2("Teflon");
   //string str3("HistosTeflon") ;
   //infile.replace(infile.find(str2),str2.length(),str3);
   string outfile("Histo" + infile);
-
+  cout<<"Input file  "<<infile<<endl;
+  cout<<"Output file  "<<outfile<<endl;
   //cout<<infile<<endl;
-
+  cout<<"Running Analysis..."<<endl;
 
 //------------------------------------------
 
@@ -171,9 +169,16 @@ void AnaClass::Loop(const TString& st)
    hPID3 = new TH2F("dE-E_3","dE-E_3",512,0,0,512,0,0);
    hPID4 = new TH2F("dE-E_4","dE-E_4",512,0,0,512,0,0);
    angBeam = new TH1F("angBeam","angBeam",512,0,0);
+
+   double thetaMin = 0;
+   double thetaMax = 40.0;
+   double step_theta = 1.0;
+   int BinsTh = TMath::Floor( (thetaMax - thetaMin) / step_theta ) + 1;
+
+
    for(int i=0;i<4;i++){
       posDSSD[i] = new TH2F(Form("posDSSD_%d",i),Form("posDSSD_%d",i),512,0,0,512,0,0);
-      angDSSD[i] = new TH1F(Form("angDSSD_%d",i),Form("angDSSD_%d",i),512,0,0);
+      angDSSD[i] = new TH1F(Form("angDSSD_%d",i),Form("angDSSD_%d",i),BinsTh,thetaMin,thetaMax);
       angCM[i] = new TH1F(Form("angCM_%d",i),Form("angCM_%d",i),512,0,0);
       ExRec[i] = new TH1F(Form("ExRec_%d",i),Form("ExRec_%d",i),512,0,0);
     }
@@ -191,7 +196,7 @@ void AnaClass::Loop(const TString& st)
       		Long64_t ientry = LoadTree(jentry);
       		if (ientry < 0) break;
       		nb = fChain->GetEntry(jentry);   nbytes += nb;
-
+          if(jentry%1000000==0) cout<<" Event   "<<jentry<<endl;
 
 
 
@@ -279,7 +284,13 @@ void AnaClass::Loop(const TString& st)
               TVector3 vRdssd = vDSSD[i] - vTarg;
               //Lab angle of the reaction
               Float_t Rang = vRdssd.Angle(vBeam);
-              angDSSD[i]->Fill(Rang*180.0/3.1415);
+
+              /*Reading solid angle from Acceptance Map.
+                The map is divided in steps of 1 deg for the 4 telescopes.
+                Format: telesNumer_Thetabin solidangle*/
+              int Bin_Thlab = TMath::Floor( (Rang*TMath::RadToDeg() - thetaMin) / step_theta );
+              double solid_ang = CFile->GetValue(Form("%i_%i", i, Bin_Thlab),-1000.0);
+              if(solid_ang>0) angDSSD[i]->Fill(Rang*180.0/3.1415,1.0/solid_ang);
 
               //---Invariant mass kinematics
               double m1 = C11_mass;
@@ -310,7 +321,6 @@ void AnaClass::Loop(const TString& st)
            //if(CUT7Be2->IsInside(SSD2_MeV,DSSD2X_eng_MeV)) corr7Be_tel2X_MeV = Correct7BeTotEner(tel2X_MeV, 1);
            //if(CUT7Be3->IsInside(SSD3_MeV,DSSD3X_eng_MeV)) corr7Be_tel3X_MeV = Correct7BeTotEner(tel3X_MeV, 2);
            //if(CUT7Be4->IsInside(SSD4_MeV,DSSD4X_eng_MeV)) corr7Be_tel4X_MeV = Correct7BeTotEner(tel4X_MeV, 3);
-
 
 
 

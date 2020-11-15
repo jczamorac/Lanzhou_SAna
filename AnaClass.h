@@ -361,6 +361,7 @@ public :
    TH1F* angBeam;
    TH1F* angCM[4];
    TH1F* ExRec[4];
+   TEnv* CFile;
 
    AnaClass(TTree *tree=0);
    virtual ~AnaClass();
